@@ -114,4 +114,41 @@ defmodule Solution.Day3 do
   end
 
   defp sum_numbers({number, _row_index, _left_border, _right_border}, acc), do: number + acc
+
+  def gear_ratio(path \\ @path) do
+    Process.put(:numbers, [])
+    Process.put(:symbols, [])
+
+    path
+    |> File.stream!()
+    |> Stream.with_index()
+    |> Stream.map(&parse_line/1)
+    |> Stream.run()
+
+    :symbols
+    |> Process.get()
+    |> Stream.map(&adjacent_numbers/1)
+    |> Stream.filter(&two_adjacent_numbers?/1)
+    |> Stream.map(&multiply_adjacent_numbers/1)
+    |> Enum.reduce(0, &sum_gear/2)
+  end
+
+  defp adjacent_numbers(symbol) do
+    :numbers
+    |> Process.get()
+    |> Stream.filter(fn {_number, row_index, left_index, right_index} ->
+      adjacent?(symbol, row_index, left_index, right_index)
+    end)
+    |> Enum.map(fn {number, _, _, _} -> number end)
+  end
+
+  defp two_adjacent_numbers?(numbers) do
+    Enum.count(numbers) == 2
+  end
+
+  defp multiply_adjacent_numbers([first, second]) do
+    first * second
+  end
+
+  defp sum_gear(number, acc), do: acc + number
 end
