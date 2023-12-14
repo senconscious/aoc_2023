@@ -11,11 +11,12 @@ defmodule Solution.Day2 do
 
   @colors ["red", "green", "blue"]
 
+  @atom_colors Enum.map(@colors, &String.to_existing_atom/1)
+
   def sum_appropriate_game_ids(path \\ @path) do
     path
     |> File.stream!()
     |> Stream.map(&parse_line/1)
-    |> Stream.map(&IO.inspect/1)
     |> Stream.filter(&appropriate_games?/1)
     |> Enum.reduce(0, &sum_ids/2)
   end
@@ -65,4 +66,41 @@ defmodule Solution.Day2 do
   defp sum_ids({id, _games}, acc) do
     acc + id
   end
+
+  def power_set(path \\ @path) do
+    path
+    |> File.stream!()
+    |> Stream.map(&parse_line/1)
+    |> Stream.filter(&valid_game?/1)
+    |> Stream.map(&min_rolls/1)
+    |> Stream.map(&game_power_set/1)
+    |> Enum.reduce(&sum_power_sets/2)
+  end
+
+  defp valid_game?({_id, _games}), do: true
+
+  defp valid_game?(_), do: false
+
+  defp min_rolls({_id, games}) do
+    Enum.reduce(games, &min_roll/2)
+  end
+
+  defp min_roll(game, acc) do
+    for key <- @atom_colors, into: %{} do
+      current_value = Map.get(acc, key, 0)
+      game_value = Map.get(game, key, 0)
+
+      if game_value > current_value do
+        {key, game_value}
+      else
+        {key, current_value}
+      end
+    end
+  end
+
+  defp game_power_set(game) do
+    Enum.reduce(game, 1, fn {_key, value}, acc -> acc * value end)
+  end
+
+  defp sum_power_sets(number, acc), do: number + acc
 end
